@@ -20,7 +20,7 @@ VS_VERSION_INFO VERSIONINFO
     BLOCK "StringFileInfo" {
         BLOCK "040904E4" {
             VALUE "CompanyName", "DWANGO Co., Ltd.\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 DWANGO Co., Ltd.\0"
+            VALUE "LegalCopyright", "Copyright (C) DWANGO Co., Ltd.\0"
             VALUE "FileDescription", "N Air Loudness Meter (OSN " TARGET_OBS_STUDIO_NODE_VERSION " / " TARGET_LIBOBS_VERSION ")\0"
             VALUE "InternalName", NAME "\0"
             VALUE "OriginalFilename", NAME "\0"

@@ -3,7 +3,7 @@
 // 配信出力のミックストラックや個別ソースの音声を EBU R 128 / ITU-R BS.1770 で計測し、
 // 名前付きパイプ経由の JSON RPC で N Air アプリケーションに結果を返す。
 //
-// Copyright (C) 2026 DWANGO Co., Ltd.
+// Copyright (C) DWANGO Co., Ltd.
 //
 // N Air Loudness is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
