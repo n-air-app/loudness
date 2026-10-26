@@ -4,3 +4,4 @@ nair-loudness/x64/
 
 *.vcxproj.user
 *.aps
+tools/test-signals/

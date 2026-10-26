@@ -18,6 +18,10 @@ constexpr uint32_t MAX_PENDING_SECONDS = 10;
 // True Peak はオーバーサンプリングで重いので、必要になるまで入れない。
 constexpr int EBUR128_MODE = EBUR128_MODE_M | EBUR128_MODE_S | EBUR128_MODE_I | EBUR128_MODE_LRA;
 
+// 窓が音声で埋まるまでの長さ (EBU Tech 3341)
+constexpr uint64_t MOMENTARY_WINDOW_MS = 400;
+constexpr uint64_t SHORT_TERM_WINDOW_MS = 3000;
+
 std::optional<double> toLoudness(int err, double value)
 {
 	// libebur128 は値が確定しないとき -HUGE_VAL を返す
@@ -189,17 +193,33 @@ LoudnessSnapshot Meter::snapshot()
 	if (!state_)
 		return s;
 
+	// libebur128 は窓が埋まる前でも、足りない分を無音として計算した値を返す。
+	// 計測開始直後に実際より小さい値が出るのを避けるため、窓が埋まるまでは null にする
+	const bool momentaryReady = frames_ * 1000 >= MOMENTARY_WINDOW_MS * sampleRate_;
+	const bool shortTermReady = frames_ * 1000 >= SHORT_TERM_WINDOW_MS * sampleRate_;
+
 	double value;
 	int err;
 
-	err = ebur128_loudness_momentary(state_, &value);
-	s.momentary = toLoudness(err, value);
-	err = ebur128_loudness_shortterm(state_, &value);
-	s.shortTerm = toLoudness(err, value);
+	if (momentaryReady) {
+		err = ebur128_loudness_momentary(state_, &value);
+		s.momentary = toLoudness(err, value);
+	}
+	if (shortTermReady) {
+		err = ebur128_loudness_shortterm(state_, &value);
+		s.shortTerm = toLoudness(err, value);
+	}
+	// Integrated はゲートを通るブロックがなければ -HUGE_VAL (= null) になる
 	err = ebur128_loudness_global(state_, &value);
 	s.integrated = toLoudness(err, value);
-	err = ebur128_loudness_range(state_, &value);
-	s.range = toLoudness(err, value);
+	// LRA はゲートを通る short-term ブロックがないと -HUGE_VAL ではなく 0.0 を返すので、
+	// 本当に 0 LU なのか区別できない。short-term ブロックは 3 秒経つまで作られず、
+	// 無音 (-70 LUFS 未満) のブロックは数えられない。ブロック数は公開 API で取れないため、
+	// 「3 秒経過 かつ Integrated が確定 (= -70 LUFS を超える音がある)」を代わりの条件にする
+	if (shortTermReady && s.integrated) {
+		err = ebur128_loudness_range(state_, &value);
+		s.range = toLoudness(err, value);
+	}
 	s.frames = frames_;
 	return s;
 }

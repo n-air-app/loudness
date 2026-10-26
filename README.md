@@ -67,6 +67,18 @@ node tools/probe.mjs --track 0 --source <sourceId> --interval 1000 --duration 60
 `Ctrl+C` で終了すると、作成したメーターを破棄してから切断します。
 OBS のログに `[nair-loudness] plugin ... loaded` が出ていればプラグインは読み込まれています。
 
+### 精度の確認
+
+1kHz のサイン波をステレオ両チャンネルに A dBFS で入れると、BS.1770 では A LUFS になります (許容 ±0.1 LU)。
+次のコマンドで -15 / -23 / -33 dBFS の 60 秒の WAV を `tools/test-signals/` に作れます (生成物はコミットしない)。
+
+```powershell
+node tools/make-test-signals.mjs <n-air-app>\node_modules\obs-studio-node\ffmpeg.exe
+```
+
+N Air で「メディアソース」として再生し、他の音声をミュートした状態で `track1` とそのソースの値が期待値になるか確認します。
+ミキサー音量は 100% (0 dB) にしておきます。
+
 ## 通信プロトコル
 
 名前付きパイプ `\\.\pipe\NAirLoudness` に接続し、改行区切りの JSON を送受信します。
@@ -129,7 +141,14 @@ N Air では OBS 上のソース名は表示名ではなく N Air の `sourceId`
 {"momentary": -18.2, "shortTerm": -17.9, "integrated": -18.5, "range": 4.1, "frames": 480000}
 ```
 
-値が確定していない項目 (計測開始直後や無音) は `null` です。単位は `range` のみ LU、他は LUFS です。
+値が確定していない項目は `null` です。単位は `range` のみ LU、他は LUFS です。
+
+- `momentary`: 計測開始 (または `reset`) から 0.4 秒経つまでは `null`
+- `shortTerm`: 同じく 3 秒経つまでは `null`
+- `integrated`: -70 LUFS を超える音がまだない (無音しかない) 間は `null`
+- `range`: 3 秒経過していて、かつ `integrated` が確定するまでは `null`
+
+窓が埋まる前の値は足りない部分を無音として計算した、実際より小さい値になるため返しません。
 
 #### `reset`
 
