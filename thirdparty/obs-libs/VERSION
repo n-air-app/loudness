@@ -1,0 +1,7 @@
+libobs: 30.2.4sl41
+compatibility: obs-studio-node 0.25.56
+
+This directory contains only the LibOBS headers and Windows x64 import library
+required to build nair-loudness. They are copied from n-air-app/substream
+(branch release/1.1.x-osn0.25.56). Keep include/ and lib/obs.lib together
+to avoid ABI mismatches.

@@ -1,0 +1,38 @@
+#define APSTUDIO_READONLY_SYMBOLS
+#include "winres.h"
+#include "version.h"
+
+#define NAME "nair-loudness.dll"
+
+VS_VERSION_INFO VERSIONINFO
+    FILEVERSION VERSION_NUMBERS
+    PRODUCTVERSION VERSION_NUMBERS
+    FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+    FILEFLAGS 0x1L
+#else
+    FILEFLAGS 0x0L
+#endif
+    FILEOS 0x40004L
+    FILETYPE 0x2L
+    FILESUBTYPE 0x0L
+{
+    BLOCK "StringFileInfo" {
+        BLOCK "040904E4" {
+            VALUE "CompanyName", "DWANGO Co., Ltd.\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 DWANGO Co., Ltd.\0"
+            VALUE "FileDescription", "N Air Loudness Meter (OSN " TARGET_OBS_STUDIO_NODE_VERSION " / " TARGET_LIBOBS_VERSION ")\0"
+            VALUE "InternalName", NAME "\0"
+            VALUE "OriginalFilename", NAME "\0"
+            VALUE "ProductName", NAME "\0"
+            VALUE "FileVersion", VERSION "\0"
+            VALUE "ProductVersion", VERSION "\0"
+            VALUE "Comments", "Built for obs-studio-node " TARGET_OBS_STUDIO_NODE_VERSION " / " TARGET_LIBOBS_VERSION "\0"
+            VALUE "LibOBSVersion", TARGET_LIBOBS_VERSION "\0"
+            VALUE "OBSStudioNodeVersion", TARGET_OBS_STUDIO_NODE_VERSION "\0"
+        }
+    }
+    BLOCK "VarFileInfo" {
+        VALUE "Translation", 0x409, 1252
+    }
+}

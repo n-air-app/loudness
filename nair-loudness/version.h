@@ -1,0 +1,6 @@
+#pragma once
+
+#define VERSION "0.1.0"
+#define VERSION_NUMBERS 0, 1, 0, 0
+#define TARGET_LIBOBS_VERSION "30.2.4sl41"
+#define TARGET_OBS_STUDIO_NODE_VERSION "0.25.56"

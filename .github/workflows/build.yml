@@ -1,0 +1,50 @@
+name: build
+
+on:
+  push:
+    branches: [main, 'release/**']
+    tags: ['*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
+
+      - name: Build
+        run: msbuild nair-loudness.sln /p:Configuration=Release /p:Platform=x64 /m
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nair-loudness
+          path: |
+            x64/Release/nair-loudness.dll
+            x64/Release/nair-loudness.pdb
+          if-no-files-found: error
+
+  # タグを push すると Draft Release を作り、DLL と PDB を添付する。
+  # 内容を確認してから手動で Publish する。
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: nair-loudness
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" nair-loudness.dll nair-loudness.pdb \
+            --repo "$GITHUB_REPOSITORY" --draft --title "$TAG" --generate-notes

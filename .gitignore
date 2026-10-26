@@ -1,0 +1,6 @@
+.vs
+x64/
+nair-loudness/x64/
+
+*.vcxproj.user
+*.aps
