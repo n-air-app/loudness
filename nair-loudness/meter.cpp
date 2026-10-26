@@ -68,7 +68,10 @@ bool Meter::attach()
 			detach();
 			return false;
 		}
-		obs_add_raw_audio_callback(tap_.mixIdx, nullptr, &Meter::onRawAudio, this);
+		// 値初期化 (()) で zero[] をゼロ埋めする
+		rawParam_ = std::unique_ptr<RawAudioParam>(new RawAudioParam());
+		rawParam_->meter = this;
+		obs_add_raw_audio_callback(tap_.mixIdx, nullptr, &Meter::onRawAudio, rawParam_.get());
 	} else {
 		obs_source_t *source = obs_get_source_by_name(tap_.sourceName.c_str());
 		if (!source) {
@@ -92,7 +95,7 @@ void Meter::detach()
 	// pendingMutex_ を持ったまま解除するとデッドロックするので、ロックは取らずに呼ぶこと。
 	if (attached_) {
 		if (tap_.kind == MeterTap::Kind::Track) {
-			obs_remove_raw_audio_callback(tap_.mixIdx, &Meter::onRawAudio, this);
+			obs_remove_raw_audio_callback(tap_.mixIdx, &Meter::onRawAudio, rawParam_.get());
 		} else if (weakSource_) {
 			// ソースが既に破棄されていればコールバックリストごと消えているので何もしなくてよい
 			obs_source_t *source = obs_weak_source_get_source(weakSource_);
@@ -120,7 +123,7 @@ void Meter::detach()
 
 void Meter::onRawAudio(void *param, size_t, struct audio_data *data)
 {
-	static_cast<Meter *>(param)->push(data, 1.0f);
+	static_cast<RawAudioParam *>(param)->meter->push(data, 1.0f);
 }
 
 void Meter::onSourceAudio(void *param, obs_source_t *source, const struct audio_data *data, bool muted)

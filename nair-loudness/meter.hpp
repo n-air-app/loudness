@@ -13,6 +13,7 @@
 #include <obs-module.h>
 
 #include <condition_variable>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -71,10 +72,22 @@ private:
 	void workerLoop();
 	ebur128_state *createState() const;
 
+	// obs_add_raw_audio_callback に渡す param。
+	// Streamlabs 版 libobs (30.2.4sl41) の do_audio_output() は、param を確認せずに
+	// struct obs_encoder * として読み、encoder->video が非 NULL ならキャンバスを比較して
+	// コールバックを飛ばす。Meter * をそのまま渡すと範囲外の不定なメモリを読み、
+	// コールバックが来なかったりクラッシュしたりする。
+	// obs_encoder 全体より大きいゼロ領域を後ろに付けて、video が常に NULL に見えるようにする。
+	struct RawAudioParam {
+		Meter *meter;               // obs_encoder の先頭 (context.name) に重なるが、そこは読まれない
+		unsigned char zero[16384];  // sizeof(struct obs_encoder) は数 KB。余裕を持たせる
+	};
+
 	const MeterTap tap_;
 	const uint32_t channels_;
 	const uint32_t sampleRate_;
 
+	std::unique_ptr<RawAudioParam> rawParam_;
 	obs_weak_source_t *weakSource_ = nullptr;
 	bool attached_ = false;
 
