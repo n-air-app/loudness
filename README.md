@@ -54,6 +54,19 @@ copy .\x64\Release\nair-loudness.dll <n-air-app>\node_modules\obs-studio-node\ob
 
 配布時の DLL 署名は N Air のパッケージング時に行うため、このリポジトリでは署名しません。
 
+## 動作確認
+
+DLL を置いた N Air を起動しておき、別のターミナルから `tools/probe.mjs` を実行します (Node.js 18 以降、依存パッケージなし)。
+
+```powershell
+node tools/probe.mjs --list                 # プラグイン情報と音声ソース一覧だけ表示
+node tools/probe.mjs                        # トラック1 + マイク系ソース (pre / post) を 500ms ごとに表示
+node tools/probe.mjs --track 0 --source <sourceId> --interval 1000 --duration 60
+```
+
+`Ctrl+C` で終了すると、作成したメーターを破棄してから切断します。
+OBS のログに `[nair-loudness] plugin ... loaded` が出ていればプラグインは読み込まれています。
+
 ## 通信プロトコル
 
 名前付きパイプ `\\.\pipe\NAirLoudness` に接続し、改行区切りの JSON を送受信します。
@@ -84,6 +97,16 @@ copy .\x64\Release\nair-loudness.dll <n-air-app>\node_modules\obs-studio-node\ob
  "runtimeLibobs": "30.2.4", "sampleRate": 48000, "channels": 2}
 ```
 
+#### `listSources`
+
+音声出力を持つ OBS ソースの一覧を返します。`create` の `source` に渡す名前の確認用です。
+
+```json
+{"sources": [{"name": "wasapi_input_capture_xxxx", "id": "wasapi_input_capture"}]}
+```
+
+N Air では OBS 上のソース名は表示名ではなく N Air の `sourceId` です。
+
 #### `create`
 
 メーターを作成して計測を開始します。
@@ -94,7 +117,7 @@ copy .\x64\Release\nair-loudness.dll <n-air-app>\node_modules\obs-studio-node\ob
 ```
 
 - `track`: 0 始まりのミックストラック番号。配信に乗るのはシンプルモードでは 0、詳細モードでは `AdvOut.TrackIndex - 1`
-- `source`: OBS のソース名
+- `source`: OBS のソース名 (N Air の `sourceId`)
 
 レスポンス: `{"meterId": 1}`
 

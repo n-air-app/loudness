@@ -73,6 +73,24 @@ json getInfo()
 	};
 }
 
+// {"listSources"} -> {"sources": [{"name", "id"}]}
+// 音声出力を持つソースの一覧。create の source に渡す名前の確認用
+json listSources()
+{
+	json sources = json::array();
+	obs_enum_sources(
+		[](void *param, obs_source_t *source) {
+			if (obs_source_get_output_flags(source) & OBS_SOURCE_AUDIO) {
+				const char *name = obs_source_get_name(source);
+				const char *id = obs_source_get_id(source);
+				static_cast<json *>(param)->push_back({{"name", name ? name : ""}, {"id", id ? id : ""}});
+			}
+			return true;
+		},
+		&sources);
+	return {{"sources", sources}};
+}
+
 // {"create", {"type": "track", "track": 0}}
 // {"create", {"type": "source", "source": "マイク", "postFader": false}}
 // -> {"meterId": n}
@@ -175,6 +193,8 @@ json dispatch(const json &request)
 	try {
 		if (fn == "info")
 			result = getInfo();
+		else if (fn == "listSources")
+			result = listSources();
 		else if (fn == "create")
 			result = createMeter(arg);
 		else if (fn == "get")
